@@ -9,7 +9,6 @@ class NumpyBagOfWords:
     Implementação de Bag of Words
     Inspirada nos guiões das aulas práticas
     """
-
     def __init__(self, max_words=5000):
         self.max_words = max_words
         self.vocab = {}
