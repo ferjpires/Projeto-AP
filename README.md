@@ -50,8 +50,8 @@ Projeto-AP/
 │
 ├── saved_models/                  # Modelos treinados (estão no .gitignore)
 │
-├── submissions/                   # Ficheiros de submissão
-│   ├── submissao1/                #   Primeira submissão
+├── subm1/                   # Ficheiros de submissão
+│ 
 │
 │
 ├── docs/                          # Documentação adicional (#TODO)
