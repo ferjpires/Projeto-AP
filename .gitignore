@@ -209,6 +209,4 @@ __marimo__/
 
 *.npz
 *.pt
-*.pth
-*.pkl
 *.h5
