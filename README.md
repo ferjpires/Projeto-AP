@@ -25,8 +25,6 @@ Projeto-AP/
 │   ├── 03_treino_cnn1d.ipynb
 │   ├── 04_treino_bilstm.ipynb
 │   ├── 05_treino_numpy_logisticregression.ipynb
-│   ├── 06_submissao1_DNN.ipynb             # Submissao 1
-│   └── 07_submissao1_cnn1d.ipynb           # Submissao 1
 │
 ├── src/                           # Código-fonte
 │   ├── data_processing.py         #   Pré-processamento de texto
@@ -50,9 +48,8 @@ Projeto-AP/
 │
 ├── saved_models/                  # Modelos treinados (estão no .gitignore)
 │
-├── subm1/                   # Ficheiros de submissão
+├── Subm1/                   # Ficheiros da submissão 1
 │ 
-│
 │
 ├── docs/                          # Documentação adicional (#TODO)
 ├── requirements.txt               # Dependências Python
