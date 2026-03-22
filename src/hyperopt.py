@@ -1,12 +1,10 @@
-import itertools
+import random
 
-def build_grid(dictionary):
-    """
-    Função baseada no guião da aula_05_03.
-    Recebe um dicionário com os hiperparâmetros a testar e devolve
-    um gerador com todas as combinações possíveis.
-    """
-    keys = dictionary.keys()
-    values = dictionary.values()
-    for instance in itertools.product(*values):
+def build_random_search(dictionary, n_iter=20, random_state=42):
+    random.seed(random_state)
+    keys = list(dictionary.keys())
+    values = list(dictionary.values())
+
+    for _ in range(n_iter):
+        instance = [random.choice(v) for v in values]
         yield dict(zip(keys, instance))
