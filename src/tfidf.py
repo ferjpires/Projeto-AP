@@ -41,11 +41,11 @@ class NumpyTfIdf:
             unique_tokens = set(tokens)
             word_doc_count.update(unique_tokens)
 
-        most_common = counter.most_common(self.max_words)
+        most_common = word_doc_count.most_common(self.max_words)
 
         for i, (word, _count) in enumerate(most_common):
             self.vocab[word] = i
-            self.idf[word] = math.log(doc_count / (1 + word_doc_count[word]))
+            self.idf[word] = math.log((doc_count + 1) / (1 + word_doc_count[word])) + 1
 
     def transform(self, texts):
         """

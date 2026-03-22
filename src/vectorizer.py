@@ -15,16 +15,16 @@ class Vectorizer(ABC):
     """Abstract base class for all vectorizers."""
 
     @abstractmethod
-    def fit(self, texts_clean, texts_raw):
+    def fit(self, texts, texts_raw=None):
         pass
 
     @abstractmethod
-    def transform(self, texts_clean, texts_raw):
+    def transform(self, texts, texts_raw=None):
         pass
 
-    def fit_transform(self, texts_clean, texts_raw):
-        self.fit(texts_clean, texts_raw)
-        return self.transform(texts_clean, texts_raw)
+    def fit_transform(self, texts, texts_raw=None):
+        self.fit(texts, texts_raw)
+        return self.transform(texts, texts_raw)
 
     @abstractmethod
     def save(self, path):
@@ -41,12 +41,12 @@ class WordVectorizer(Vectorizer):
     def __init__(self, max_words=5000):
         self.tfidf = NumpyTfIdf(max_words=max_words, analyzer="word")
 
-    def fit(self, texts_clean, texts_raw=None):
-        self.tfidf.fit(texts_clean)
+    def fit(self, texts, texts_raw=None):
+        self.tfidf.fit(texts)
         return self
 
-    def transform(self, texts_clean, texts_raw=None):
-        return self.tfidf.transform(texts_clean)
+    def transform(self, texts, texts_raw=None):
+        return self.tfidf.transform(texts)
 
     def save(self, path):
         self.tfidf.save(path)
@@ -63,12 +63,12 @@ class CharNgramVectorizer(Vectorizer):
             max_words=max_words, analyzer="char", ngram_range=ngram_range
         )
 
-    def fit(self, texts_clean, texts_raw=None):
-        self.tfidf.fit(texts_clean)
+    def fit(self, texts, texts_raw=None):
+        self.tfidf.fit(texts)
         return self
 
-    def transform(self, texts_clean, texts_raw=None):
-        return self.tfidf.transform(texts_clean)
+    def transform(self, texts, texts_raw=None):
+        return self.tfidf.transform(texts)
 
     def save(self, path):
         self.tfidf.save(path)
@@ -86,9 +86,9 @@ class StylometricVectorizer(Vectorizer):
         self.style_mean = None
         self.style_std = None
 
-    def fit(self, texts_clean, texts_raw):
-        assert len(texts_clean) == len(texts_raw), (
-            f"texts_clean ({len(texts_clean)}) and texts_raw ({len(texts_raw)}) must have the same length"
+    def fit(self, texts, texts_raw):
+        assert len(texts) == len(texts_raw), (
+            f"texts ({len(texts)}) and texts_raw ({len(texts_raw)}) must have the same length"
         )
 
         self.char_vectorizer.fit(texts_raw)
@@ -97,12 +97,12 @@ class StylometricVectorizer(Vectorizer):
         self.style_std = X_style.std(axis=0) + 1e-8
         return self
 
-    def transform(self, texts_clean, texts_raw):
-        assert len(texts_clean) == len(texts_raw), (
-            f"texts_clean ({len(texts_clean)}) and texts_raw ({len(texts_raw)}) must have the same length"
+    def transform(self, texts, texts_raw):
+        assert len(texts) == len(texts_raw), (
+            f"texts ({len(texts)}) and texts_raw ({len(texts_raw)}) must have the same length"
         )
 
-        X_tfidf = self.char_vectorizer.transform(texts_clean)
+        X_tfidf = self.char_vectorizer.transform(texts_raw)
         X_style = self.style_extractor.transform(texts_raw)
         X_style = (X_style - self.style_mean) / self.style_std
         return np.hstack([X_tfidf, X_style])

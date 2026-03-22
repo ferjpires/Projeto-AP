@@ -26,12 +26,24 @@ class ActivationLayer(Layer):
     def parameters(self):
         return 0
 
+
 class ReLUActivation(ActivationLayer):
     def activation_function(self, input):
         return np.maximum(0, input)
 
     def derivative(self, input):
         return np.where(input <= 0, 0, 1)
+
+
+class LeakyReLUActivation(ActivationLayer):
+    def __init__(self, alpha=0.01):
+        self.alpha = alpha
+
+    def activation_function(self, input):
+        return np.where(input > 0, input, self.alpha * input)
+
+    def derivative(self, input):
+        return np.where(input > 0, 1, self.alpha)
 
 
 class SoftmaxActivation(Layer):

@@ -65,8 +65,13 @@ class DenseLayer(Layer):
         weights_error = np.dot(self.input.T, output_error) + self.l2_reg * self.weights
         bias_error = np.sum(output_error, axis=0, keepdims=True)
 
-        weights_error = np.clip(weights_error, -self.max_norm, self.max_norm)
-        bias_error = np.clip(bias_error, -self.max_norm, self.max_norm)
+        w_norm = np.linalg.norm(weights_error)
+        if w_norm > self.max_norm:
+            weights_error = weights_error * (self.max_norm / w_norm)
+
+        b_norm = np.linalg.norm(bias_error)
+        if b_norm > self.max_norm:
+            bias_error = bias_error * (self.max_norm / b_norm)
 
         self.weights = self.w_opt.update(self.weights, weights_error)
         self.biases = self.b_opt.update(self.biases, bias_error)
