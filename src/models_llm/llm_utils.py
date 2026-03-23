@@ -59,6 +59,7 @@ def run_experiment(
 
             raw = ask_fn(prompt)
             pred = normalize_fn(raw)
+            print(pred)
 
             raw_outputs.append(raw)
             predictions.append(pred)
