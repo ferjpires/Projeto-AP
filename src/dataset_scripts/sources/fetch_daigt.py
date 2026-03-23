@@ -37,6 +37,7 @@ def fetch_daigt(
     df = df[df["Label"].isin(classes_oficiais)].copy()
 
     df["Text"] = df["text"].apply(lambda x: truncate_text(str(x), max_words=120))
+    df = df[~df["Text"].str.startswith("Error:")].copy()
     df = df[["Text", "Label"]].dropna().reset_index(drop=True)
 
     df = df.sample(frac=1, random_state=random_state).reset_index(drop=True)

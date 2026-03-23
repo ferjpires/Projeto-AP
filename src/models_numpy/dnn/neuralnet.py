@@ -50,14 +50,15 @@ class NeuralNetwork:
         )
         if shuffle:
             np.random.shuffle(indices)
-        for start in range(0, n_samples - self.batch_size + 1, self.batch_size):
+        for start in range(0, n_samples, self.batch_size):
+            end = min(start + self.batch_size, n_samples)
             if y is not None:
                 yield (
-                    X[indices[start : start + self.batch_size]],
-                    y[indices[start : start + self.batch_size]],
+                    X[indices[start:end]],
+                    y[indices[start:end]],
                 )
             else:
-                yield X[indices[start : start + self.batch_size]], None
+                yield X[indices[start:end]], None
 
     def forward_propagation(self, X, training):
         output = X
