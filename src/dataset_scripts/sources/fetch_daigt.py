@@ -18,7 +18,11 @@ LABEL_MAP = {
 }
 
 
-def fetch_daigt(raw_path="../../data/raw/dataset_kaggle_daigt.csv") -> pd.DataFrame:
+def fetch_daigt(
+    raw_path="../../data/raw/dataset_kaggle_daigt.csv",
+    max_per_class: int = 150,
+    random_state: int = 42,
+) -> pd.DataFrame:
     print(f"Loading DAIGT dataset from {raw_path}...")
 
     try:
@@ -33,10 +37,12 @@ def fetch_daigt(raw_path="../../data/raw/dataset_kaggle_daigt.csv") -> pd.DataFr
     df = df[df["Label"].isin(classes_oficiais)].copy()
 
     df["Text"] = df["text"].apply(lambda x: truncate_text(str(x), max_words=120))
-
     df = df[["Text", "Label"]].dropna().reset_index(drop=True)
 
-    print(f"  Loaded {len(df)} samples from DAIGT")
+    df = df.sample(frac=1, random_state=random_state).reset_index(drop=True)
+    df = df.groupby("Label").head(max_per_class).reset_index(drop=True)
+
+    print(f"  Loaded {len(df)} samples from DAIGT (max {max_per_class}/class)")
     print(f"  Distribution: {df['Label'].value_counts().to_dict()}")
 
     return df

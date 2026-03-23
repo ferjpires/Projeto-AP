@@ -35,17 +35,6 @@ class ReLUActivation(ActivationLayer):
         return np.where(input <= 0, 0, 1)
 
 
-class LeakyReLUActivation(ActivationLayer):
-    def __init__(self, alpha=0.01):
-        self.alpha = alpha
-
-    def activation_function(self, input):
-        return np.where(input > 0, input, self.alpha * input)
-
-    def derivative(self, input):
-        return np.where(input > 0, 1, self.alpha)
-
-
 class SoftmaxActivation(Layer):
     def forward_propagation(self, input, training):
         self.input = input

@@ -1,8 +1,3 @@
-"""
-Vectorizer hierarchy for text feature extraction.
-Supports word TF-IDF, char n-gram TF-IDF, and stylometric features.
-"""
-
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -130,6 +125,34 @@ class StylometricVectorizer(Vectorizer):
         self.style_mean = data["style_mean"]
         self.style_std = data["style_std"]
 
+class StylometricOnlyVectorizer(Vectorizer):
+    def __init__(self, **kwargs):
+        self.style_extractor = StylometricFeaturesExtractor()
+        self.style_mean = None
+        self.style_std = None
+
+    def fit(self, texts, texts_raw):
+        X_style = self.style_extractor.fit_transform(texts_raw)
+        self.style_mean = X_style.mean(axis=0)
+        self.style_std  = X_style.std(axis=0) + 1e-8
+        return self
+
+    def transform(self, texts, texts_raw):
+        X_style = self.style_extractor.transform(texts_raw)
+        return (X_style - self.style_mean) / self.style_std
+
+    def save(self, path):
+        import pickle
+        with open(path, 'wb') as f:
+            pickle.dump({'style_mean': self.style_mean, 'style_std': self.style_std}, f)
+
+    def load(self, path):
+        import pickle
+        with open(path, 'rb') as f:
+            data = pickle.load(f)
+        self.style_mean = data['style_mean']
+        self.style_std  = data['style_std']
+
 
 def create_vectorizer(vectorizer_type: str, **kwargs) -> Vectorizer:
     if vectorizer_type == "word":
@@ -138,5 +161,7 @@ def create_vectorizer(vectorizer_type: str, **kwargs) -> Vectorizer:
         return CharNgramVectorizer(**kwargs)
     elif vectorizer_type == "stylometric":
         return StylometricVectorizer(**kwargs)
+    elif vectorizer_type == "stylometric_only":
+        return StylometricOnlyVectorizer(**kwargs)
     else:
         raise ValueError(f"Unknown vectorizer type: {vectorizer_type}")
