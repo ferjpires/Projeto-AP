@@ -210,3 +210,4 @@ __marimo__/
 *.npz
 *.pt
 *.h5
+**_plan.*
