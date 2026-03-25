@@ -34,7 +34,10 @@ class DenseLayer(Layer):
     def __init__(self, n_units, input_shape=None, l2_reg=0.001, max_norm=3.0):
         super().__init__()
         self.n_units = n_units
-        self._input_shape = input_shape
+        # Ensure input_shape is always a tuple if provided
+        self._input_shape = (
+            (input_shape,) if isinstance(input_shape, int) else input_shape
+        )
         self.l2_reg = l2_reg
         self.max_norm = max_norm
 
@@ -44,9 +47,10 @@ class DenseLayer(Layer):
         self.biases = None
 
     def initialize(self, optimizer):
-        fan_in = self.input_shape()[0]
+        input_shape = self.input_shape()
+        fan_in = input_shape[0] if isinstance(input_shape, tuple) else input_shape
         std = np.sqrt(2.0 / fan_in)
-        self.weights = np.random.normal(0, std, (self.input_shape()[0], self.n_units))
+        self.weights = np.random.normal(0, std, (fan_in, self.n_units))
         self.biases = np.zeros((1, self.n_units))
         self.w_opt = copy.deepcopy(optimizer)
         self.b_opt = copy.deepcopy(optimizer)

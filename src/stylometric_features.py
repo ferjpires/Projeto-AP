@@ -21,7 +21,6 @@ FEATURE_NAMES = [
     "transition_density",
     "lexical_density",
     "sent_len_cv",
-    "log_word_count"
 ]
 
 N_FEATURES = len(FEATURE_NAMES)
@@ -123,8 +122,6 @@ class StylometricFeaturesExtractor:
 
         sent_len_cv = (sentence_length_std / avg_sentence_length) if avg_sentence_length > 0 else 0.0
 
-        log_word_count = np.log1p(num_words)
-
         return [
             avg_word_length,
             type_token_ratio,
@@ -144,5 +141,4 @@ class StylometricFeaturesExtractor:
             transition_density,
             lexical_density,
             sent_len_cv,
-            log_word_count
         ]
