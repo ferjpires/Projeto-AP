@@ -4,7 +4,7 @@
    serão relacionados com temáticas das ciências naturais (biologia, biomedicina/ saúde,
    química, física, matemática e áreas tecnológicas afins como a engenharia)
 
-dá-me frases com isso, em ingles, por favor, para o meu dataset. gera para csv. 100 a 120 palavras, gera 50 frases de cada tema.
+Gera frases com isso, em ingles, para o meu dataset. Gera para csv. 100 a 120 palavras, gera 50 frases de cada tema.
 
 As frases nao podem ser iguais.
 Vai mandando em blocos de 10 e eu vou dizendo para continuares

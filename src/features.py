@@ -78,8 +78,18 @@ def load_glove_embeddings(
 
 
 class TextDataset(Dataset):
-    def __init__(self, sequences: np.ndarray, labels: np.ndarray,
-                    style_features: np.ndarray | None = None):
+    def __init__(
+        self,
+        sequences: np.ndarray,
+        labels: np.ndarray,
+        style_features: np.ndarray | None = None,
+    ):
+        if style_features is not None:
+            labels_arr = np.asarray(labels)
+            style_arr = np.asarray(style_features)
+            if labels_arr.ndim > 1 and style_arr.ndim == 1:
+                labels, style_features = style_features, labels
+
         self.sequences = torch.tensor(sequences, dtype=torch.long)
         self.labels = torch.tensor(labels, dtype=torch.long)
         self.style_features = (

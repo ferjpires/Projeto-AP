@@ -18,21 +18,27 @@ class LSTMClassifier(nn.Module):
     ):
         super().__init__()
         self.pooling = pooling
+        self.hidden_dim = hidden_dim
+        self.n_layers = n_layers
+        self.dropout_rate = dropout
 
         self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=0)
         if pretrained_embeddings is not None:
             self.embedding.weight.data.copy_(pretrained_embeddings)
             self.embedding.weight.requires_grad = False
 
+        lstm_dropout = dropout if n_layers > 1 else 0.0
+        if torch.version.hip is not None and lstm_dropout > 0.0:
+            lstm_dropout = 0.0
+
         self.lstm = nn.LSTM(
             embedding_dim,
             hidden_dim,
             num_layers=n_layers,
             bidirectional=True,
-            dropout=0,
+            dropout=lstm_dropout,
             batch_first=True,
         )
-        self.inter_layer_dropout = nn.Dropout(dropout) if n_layers > 1 else None
 
         self.dropout = nn.Dropout(dropout)
 
@@ -43,9 +49,16 @@ class LSTMClassifier(nn.Module):
 
     def forward(self, x, style_features=None):
         mask = (x != 0)
+        lengths = mask.sum(dim=1).clamp(min=1).cpu()
 
         embedded = self.embedding(x)
-        output, (hidden, cell) = self.lstm(embedded)
+        packed = nn.utils.rnn.pack_padded_sequence(
+            embedded, lengths, batch_first=True, enforce_sorted=False
+        )
+        packed_output, (hidden, cell) = self.lstm(packed)
+        output, _ = nn.utils.rnn.pad_packed_sequence(
+            packed_output, batch_first=True, total_length=x.size(1)
+        )
 
         if self.pooling == "attention":
             attn_weights = self.attention(output).squeeze(-1)

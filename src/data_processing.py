@@ -1,5 +1,6 @@
 import re
 import nltk
+import pandas as pd
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
@@ -28,3 +29,8 @@ def clean_text_sequences(text: str) -> str:
     text = re.sub(r"\s+", " ", text).strip()
     tokens = [t for t in word_tokenize(text) if t.isalpha()]
     return " ".join(tokens)
+
+def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    df_copy = df.copy()
+    df_copy["Text"] = df_copy["Text"].apply(clean_text)
+    return df_copy

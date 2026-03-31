@@ -212,3 +212,4 @@ __marimo__/
 *.h5
 scripts
 data/embeddings/
+.direnv

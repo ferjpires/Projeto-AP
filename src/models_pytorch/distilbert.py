@@ -18,8 +18,10 @@ class DistilBERTClassifier(nn.Module):
 
     def forward(self, input_ids, attention_mask, style_features=None):
         outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask)
-        cls_output = outputs.last_hidden_state[:, 0, :]  # (batch, 768)
-        out = self.dropout(cls_output)
+        token_embeddings = outputs.last_hidden_state
+        mask = attention_mask.unsqueeze(-1).float()
+        pooled = (token_embeddings * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1.0)
+        out = self.dropout(pooled)
 
         if style_features is not None:
             out = torch.cat([out, style_features], dim=1)
