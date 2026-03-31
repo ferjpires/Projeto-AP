@@ -10,7 +10,6 @@ DATA_RAW_GENERATED = os.path.join(PROJECT_ROOT, "data", "raw", "generated")
 DATA_PROCESSED = os.path.join(PROJECT_ROOT, "data", "processed")
 
 TOPICS = [
-    # Biology / Cell biology
     "The role of mitochondria in cellular respiration",
     "How DNA replication is initiated and carried out",
     "The function of ribosomes in protein synthesis",
@@ -21,7 +20,6 @@ TOPICS = [
     "How enzymes lower activation energy in biochemical reactions",
     "The process of meiosis and its role in genetic diversity",
     "How telomeres protect chromosomes from degradation",
-    # Biomedicine / Health
     "How vaccines stimulate the adaptive immune response",
     "The pathophysiology of type 2 diabetes",
     "How PET scanning works and its clinical applications",
@@ -32,7 +30,6 @@ TOPICS = [
     "The difference between type 1 and type 2 diabetes at the molecular level",
     "How the blood-brain barrier regulates substance entry into the brain",
     "The role of gut microbiome in immune regulation",
-    # Chemistry
     "How covalent bonds form between nonmetallic elements",
     "The principles of Le Chatelier in chemical equilibrium",
     "How catalysts accelerate chemical reactions without being consumed",
@@ -43,7 +40,6 @@ TOPICS = [
     "The principles behind chromatography as a separation technique",
     "How entropy relates to spontaneity in thermodynamics",
     "The role of oxidation states in redox reactions",
-    # Physics
     "How thermonuclear fusion occurs in stars",
     "The photoelectric effect and its significance to quantum mechanics",
     "How black holes form and why light cannot escape them",
@@ -54,7 +50,6 @@ TOPICS = [
     "The relationship between electric and magnetic fields in Maxwell's equations",
     "How semiconductors are used in transistors",
     "The principles of general relativity and spacetime curvature",
-    # Mathematics
     "How the Fourier transform decomposes signals into frequencies",
     "The significance of Euler's identity in complex analysis",
     "How Bayesian inference updates probabilities with new evidence",
@@ -65,7 +60,6 @@ TOPICS = [
     "The role of eigenvalues in linear transformations",
     "How Monte Carlo methods approximate complex integrals",
     "The significance of Gödel's incompleteness theorems",
-    # Engineering / Technology
     "How lithium-ion batteries store and release energy",
     "The operating principle of a transistor in digital circuits",
     "How neural networks learn through backpropagation",
@@ -112,24 +106,8 @@ SCIENTIFIC_SEARCH_TERMS = [
     "suspension bridge stability",
 ]
 
-SYSTEM_PROMPT = (
-    "You are a scientific writer. For each topic given, write a single informative "
-    "paragraph of 100-120 words. Be factual, use scientific language, no bullet points, "
-    "no headers, no first-person. Number each response matching the topic number. "
-    "Just the numbered paragraphs, nothing else."
-)
-
-VARIANT_SEEDS = [
-    "Use a different sentence structure than you would normally.",
-    "Vary your vocabulary and phrasing.",
-    "Approach the explanation from a slightly different angle.",
-]
-
 BATCH_PROMPT = """\
-{seed}
-
-For each topic below, write a single informative paragraph of 100-120 words. \
-Be factual, use scientific language, no bullet points, no headers, no first-person. \
+For each topic below, write a single paragraph of EXACTLY 110 to 130 words. \
 Number each response matching the topic number.
 
 {numbered_topics}"""

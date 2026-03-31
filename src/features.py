@@ -46,9 +46,6 @@ class Vocabulary:
 
 
 def texts_to_sequences(texts: list[str], vocab: Vocabulary, max_len: int = 200) -> np.ndarray:
-    """
-    Converte uma lista de textos limpos em sequências de IDs com padding.
-    """
     sequences = np.zeros((len(texts), max_len), dtype=np.int64)
 
     for i, text in enumerate(texts):
@@ -62,10 +59,6 @@ def texts_to_sequences(texts: list[str], vocab: Vocabulary, max_len: int = 200) 
 def load_glove_embeddings(
     glove_path: str, vocab: Vocabulary, embedding_dim: int = 100
 ) -> torch.Tensor:
-    """
-    Carrega embeddings GloVe de um ficheiro .txt e cria uma matriz
-    alinhada com o vocabulário do projecto.
-    """
     embedding_matrix = np.random.normal(0, 0.1, (len(vocab), embedding_dim)).astype(np.float32)
     embedding_matrix[0] = np.zeros(embedding_dim)
 
@@ -85,15 +78,19 @@ def load_glove_embeddings(
 
 
 class TextDataset(Dataset):
-    """
-    PyTorch Dataset para classificação de texto.
-    """
-    def __init__(self, sequences: np.ndarray, labels: np.ndarray):
+    def __init__(self, sequences: np.ndarray, labels: np.ndarray,
+                    style_features: np.ndarray | None = None):
         self.sequences = torch.tensor(sequences, dtype=torch.long)
         self.labels = torch.tensor(labels, dtype=torch.long)
+        self.style_features = (
+            torch.tensor(style_features, dtype=torch.float32)
+            if style_features is not None else None
+        )
 
     def __len__(self):
         return len(self.labels)
 
     def __getitem__(self, idx):
+        if self.style_features is not None:
+            return self.sequences[idx], self.style_features[idx], self.labels[idx]
         return self.sequences[idx], self.labels[idx]

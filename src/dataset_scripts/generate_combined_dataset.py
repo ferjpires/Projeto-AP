@@ -13,10 +13,22 @@ CLASSES = ["Human", "OpenAI", "Meta", "Google", "Anthropic"]
 DEFAULT_OUTPUT = os.path.join(DATA_PROCESSED, "dataset_combined.csv")
 
 
+def word_count_filter(df, min_words=90, max_words=130):
+    wc = df["Text"].apply(lambda x: len(str(x).split()))
+    before = len(df)
+    df = df[(wc >= min_words) & (wc <= max_words)].copy()
+    removed = before - len(df)
+    if removed:
+        print(f"  Word filter ({min_words}-{max_words}): removed {removed}, kept {len(df)}")
+    return df
+
+
 def main():
     parser = argparse.ArgumentParser(description="Combine generated CSVs into training dataset")
     parser.add_argument("--max-per-class", type=int, default=500,
                         help="Max samples per class after balancing")
+    parser.add_argument("--min-words", type=int, default=90, help="Min words per text")
+    parser.add_argument("--max-words", type=int, default=130, help="Max words per text")
     parser.add_argument("--output", default=DEFAULT_OUTPUT, help="Output CSV path")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     args = parser.parse_args()
@@ -40,7 +52,6 @@ def main():
                 print(f"  SKIP: {name} — empty")
                 continue
 
-            # Filter to known classes only
             df = df[df["Label"].isin(CLASSES)].copy()
             if df.empty:
                 print(f"  SKIP: {name} — no known labels")
@@ -61,6 +72,8 @@ def main():
     combined = pd.concat(dfs, ignore_index=True)
     print(f"\nCombined: {len(combined)} samples")
     print(combined["Label"].value_counts().sort_index().to_string())
+
+    combined = word_count_filter(combined, args.min_words, args.max_words)
 
     before = len(combined)
     combined = deduplicate(combined)

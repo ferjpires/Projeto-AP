@@ -14,6 +14,7 @@ class LSTMClassifier(nn.Module):
         dropout: float = 0.3,
         pretrained_embeddings: torch.Tensor | None = None,
         pooling: str = "attention",
+        n_style_features: int = 0,
     ):
         super().__init__()
         self.pooling = pooling
@@ -38,9 +39,9 @@ class LSTMClassifier(nn.Module):
         if pooling == "attention":
             self.attention = nn.Linear(hidden_dim * 2, 1)
 
-        self.fc = nn.Linear(hidden_dim * 2, output_dim)
+        self.fc = nn.Linear(hidden_dim * 2 + n_style_features, output_dim)
 
-    def forward(self, x):
+    def forward(self, x, style_features=None):
         mask = (x != 0)
 
         embedded = self.embedding(x)
@@ -60,5 +61,9 @@ class LSTMClassifier(nn.Module):
             context = torch.cat([hidden_fwd, hidden_bwd], dim=1)
 
         out = self.dropout(context)
+
+        if style_features is not None:
+            out = torch.cat([out, style_features], dim=1)
+
         out = self.fc(out)
         return out

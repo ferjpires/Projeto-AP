@@ -8,22 +8,16 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utils import (
-    TOPICS, SYSTEM_PROMPT, BATCH_PROMPT, VARIANT_SEEDS,
+    TOPICS, BATCH_PROMPT,
     DATA_RAW_GENERATED, load_env, parse_batch_response, append_to_csv,
 )
 
 OUTPUT_PATH = os.path.join(DATA_RAW_GENERATED, "google.csv")
 
 
-def generate_batch(client, topics, variant_idx):
+def generate_batch(client, topics):
     numbered = "\n".join(f"{i+1}. {t}" for i, t in enumerate(topics))
-    prompt = (
-        SYSTEM_PROMPT + "\n\n"
-        + BATCH_PROMPT.format(
-            seed=VARIANT_SEEDS[variant_idx % len(VARIANT_SEEDS)],
-            numbered_topics=numbered,
-        )
-    )
+    prompt = BATCH_PROMPT.format(numbered_topics=numbered)
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=prompt,
@@ -60,7 +54,7 @@ def main():
                   f"batch {start//args.batch_size + 1} ({len(batch)} topics)...")
 
             try:
-                paragraphs = generate_batch(client, batch, v)
+                paragraphs = generate_batch(client, batch)
                 rows = []
                 for topic, para in zip(batch, paragraphs):
                     if para:

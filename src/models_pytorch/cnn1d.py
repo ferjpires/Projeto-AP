@@ -12,6 +12,7 @@ class CNN1DClassifier(nn.Module):
         output_dim: int = 5,
         dropout: float = 0.3,
         pretrained_embeddings: torch.Tensor | None = None,
+        n_style_features: int = 0,
     ):
         super().__init__()
 
@@ -28,9 +29,9 @@ class CNN1DClassifier(nn.Module):
             for fs in filter_sizes
         ])
         self.dropout = nn.Dropout(dropout)
-        self.fc = nn.Linear(n_filters * len(filter_sizes), output_dim)
+        self.fc = nn.Linear(n_filters * len(filter_sizes) + n_style_features, output_dim)
 
-    def forward(self, x):
+    def forward(self, x, style_features=None):
         embedded = self.embedding(x)
         embedded = embedded.permute(0, 2, 1)
 
@@ -39,5 +40,9 @@ class CNN1DClassifier(nn.Module):
 
         cat = torch.cat(pooled, dim=1)
         out = self.dropout(cat)
+
+        if style_features is not None:
+            out = torch.cat([out, style_features], dim=1)
+
         out = self.fc(out)
         return out

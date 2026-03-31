@@ -15,7 +15,6 @@ from utils import DATA_RAW_GENERATED
 OUTPUT_PATH = os.path.join(DATA_RAW_GENERATED, "human.csv")
 HEADERS = {"User-Agent": "StyleDetectionResearch/1.0 (academic project)"}
 
-# Wikipedia categories matching the project's 6 scientific themes
 WIKI_CATEGORIES = [
     "Biology", "Medicine", "Microbiology", "Ecology",
     "Chemistry", "Organic_chemistry",
@@ -26,7 +25,6 @@ WIKI_CATEGORIES = [
 
 
 def get_category_members(category, limit=500):
-    """Get article titles from a Wikipedia category."""
     url = (
         "https://en.wikipedia.org/w/api.php?"
         + urllib.parse.urlencode({
@@ -50,7 +48,6 @@ def get_category_members(category, limit=500):
 
 
 def get_wikipedia_extract(title):
-    """Get the intro extract of a Wikipedia page."""
     url = (
         "https://en.wikipedia.org/w/api.php?"
         + urllib.parse.urlencode({
@@ -73,7 +70,6 @@ def get_wikipedia_extract(title):
 
 
 def truncate_text(text, target_words=110):
-    """Truncate text to target_words, cutting at the last period before limit."""
     words = text.split()
     if len(words) <= target_words:
         return text
@@ -85,7 +81,6 @@ def truncate_text(text, target_words=110):
 
 
 def load_existing_texts(path):
-    """Load existing human.csv and return set of texts for dedup."""
     if not os.path.exists(path):
         return set(), pd.DataFrame(columns=["Text", "Label"])
     try:
@@ -96,7 +91,6 @@ def load_existing_texts(path):
 
 
 def fetch_from_categories(target_new, seen_texts):
-    """Fetch paragraphs from Wikipedia categories, avoiding duplicates."""
     paragraphs = []
     seen_titles = set()
 
