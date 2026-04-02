@@ -11,7 +11,6 @@ from src.stylometric_features import StylometricFeaturesExtractor
 
 class Vectorizer(ABC):
     """Abstract base class for all vectorizers."""
-
     @abstractmethod
     def fit(self, texts, texts_raw=None):
         pass
@@ -35,7 +34,6 @@ class Vectorizer(ABC):
 
 class WordVectorizer(Vectorizer):
     """Word-level TF-IDF vectorizer"""
-
     def __init__(self, max_words=5000):
         self.tfidf = NumpyTfIdf(max_words=max_words, analyzer="word")
 
@@ -55,7 +53,6 @@ class WordVectorizer(Vectorizer):
 
 class CharNgramVectorizer(Vectorizer):
     """Character n-gram TF-IDF vectorizer"""
-
     def __init__(self, max_words=5000, ngram_range=(2, 3)):
         self.tfidf = NumpyTfIdf(
             max_words=max_words, analyzer="char", ngram_range=ngram_range
@@ -128,63 +125,28 @@ class StylometricVectorizer(Vectorizer):
         self.style_mean = data["style_mean"]
         self.style_std = data["style_std"]
 
-class StylometricOnlyVectorizer(Vectorizer):
-    def __init__(self, **kwargs):
-        self.style_extractor = StylometricFeaturesExtractor()
-        self.style_mean = None
-        self.style_std = None
-
-    def fit(self, texts, texts_raw):
-        X_style = self.style_extractor.fit_transform(texts_raw)
-        self.style_mean = X_style.mean(axis=0)
-        self.style_std  = X_style.std(axis=0) + 1e-8
-        return self
-
-    def transform(self, texts, texts_raw):
-        X_style = self.style_extractor.transform(texts_raw)
-        return (X_style - self.style_mean) / self.style_std
-
-    def save(self, path):
-        import pickle
-        with open(path, 'wb') as f:
-            pickle.dump({'style_mean': self.style_mean, 'style_std': self.style_std}, f)
-
-    def load(self, path):
-        import pickle
-        with open(path, 'rb') as f:
-            data = pickle.load(f)
-        self.style_mean = data['style_mean']
-        self.style_std  = data['style_std']
-
-
 FUNCTION_WORDS = [
-    # Determiners
     "the", "a", "an", "this", "that", "these", "those", "my", "your", "his",
     "her", "its", "our", "their", "some", "any", "no", "every", "each", "all",
     "both", "few", "many", "much", "several", "such", "what", "which", "whose",
-    # Prepositions
     "of", "in", "to", "for", "with", "on", "at", "from", "by", "about",
     "as", "into", "through", "during", "before", "after", "above", "below",
     "between", "under", "along", "until", "upon", "across", "against",
     "among", "around", "behind", "beside", "beyond", "despite", "down",
     "inside", "near", "off", "onto", "outside", "over", "past", "since",
     "toward", "towards", "throughout", "underneath", "unlike", "within", "without",
-    # Conjunctions
     "and", "but", "or", "nor", "for", "yet", "so", "because", "although",
     "though", "while", "whereas", "unless", "since", "if", "when", "where",
     "after", "before", "until", "once", "whether", "than", "that", "as",
-    # Pronouns
     "i", "me", "we", "us", "you", "he", "him", "she", "it", "they", "them",
     "myself", "yourself", "himself", "herself", "itself", "ourselves", "themselves",
     "who", "whom", "whose", "which", "that", "what", "whoever", "whatever",
     "one", "ones", "something", "anything", "nothing", "everything",
     "someone", "anyone", "everyone", "nobody",
-    # Auxiliaries / Modals
     "is", "am", "are", "was", "were", "be", "been", "being",
     "have", "has", "had", "having",
     "do", "does", "did",
     "will", "would", "shall", "should", "may", "might", "can", "could", "must",
-    # Adverbs (function-like)
     "not", "also", "very", "often", "however", "too", "usually", "really",
     "already", "always", "never", "sometimes", "still", "just", "only",
     "quite", "rather", "almost", "enough", "even", "perhaps", "certainly",
@@ -194,17 +156,15 @@ FUNCTION_WORDS = [
     "particularly", "precisely", "primarily", "respectively", "significantly",
     "similarly", "specifically", "subsequently", "therefore", "thus",
     "ultimately", "virtually", "wherein", "whereby", "meanwhile",
-    # Other function words
     "here", "there", "then", "now", "how", "why", "where", "when",
     "more", "most", "less", "least", "well", "back", "else", "far",
 ]
-# Deduplicate while preserving order
+
 FUNCTION_WORDS = list(dict.fromkeys(FUNCTION_WORDS))
 
 
 class ForensicVectorizer(Vectorizer):
     """Topic-independent vectorizer using POS n-grams, function word frequencies, and stylometric features."""
-
     def __init__(self, max_words=1000, **kwargs):
         self.pos_tfidf = NumpyTfIdf(max_words=max_words, analyzer="word")
         self.function_words = FUNCTION_WORDS
@@ -288,8 +248,6 @@ def create_vectorizer(vectorizer_type: str, **kwargs) -> Vectorizer:
         return CharNgramVectorizer(**kwargs)
     elif vectorizer_type == "stylometric":
         return StylometricVectorizer(**kwargs)
-    elif vectorizer_type == "stylometric_only":
-        return StylometricOnlyVectorizer(**kwargs)
     elif vectorizer_type == "forensic":
         return ForensicVectorizer(**kwargs)
     else:

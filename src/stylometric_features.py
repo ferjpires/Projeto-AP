@@ -1,4 +1,6 @@
 import re
+from collections import Counter
+
 import numpy as np
 from typing import List
 
@@ -21,6 +23,14 @@ FEATURE_NAMES = [
     "transition_density",
     "lexical_density",
     "sent_len_cv",
+    "hapax_ratio",
+    "dis_legomena_ratio",
+    "yules_k",
+    "sentence_starter_entropy",
+    "unique_bigram_ratio",
+    "flesch_reading_ease",
+    "word_length_entropy",
+    "punct_entropy",
 ]
 
 N_FEATURES = len(FEATURE_NAMES)
@@ -30,18 +40,31 @@ class StylometricFeaturesExtractor:
     def __init__(self):
         self.HEDGERS = [
             "however", "although", "while", "whereas", "nevertheless",
-            "nonetheless", "it is worth noting", "it should be noted"
+            "nonetheless", "it is worth noting", "it should be noted",
+            "arguably", "potentially", "seemingly", "presumably",
+            "it is important to note", "one might argue", "to some extent",
+            "it could be argued", "perhaps", "possibly", "likely",
+            "generally speaking", "in many cases", "broadly speaking",
+            "it is widely recognized", "to a certain degree",
+            "in some respects",
         ]
 
         self.DISCOURSE = [
             "furthermore", "moreover", "in conclusion", "in summary",
-            "notably", "specifically", "in particular", "as a result"
+            "notably", "specifically", "in particular", "as a result",
+            "for instance", "for example", "in other words",
+            "on the other hand", "in contrast", "by comparison",
+            "as mentioned", "it is clear that",
+            "overall", "ultimately", "to summarize", "in essence",
+            "additionally", "equally important", "more importantly",
+            "first and foremost", "last but not least",
         ]
 
         self.TRANSITIONS = [
             "furthermore", "moreover", "however", "nevertheless", "nonetheless",
             "whereas", "while", "although", "in addition", "consequently",
-            "therefore", "thus"
+            "therefore", "thus", "accordingly", "hence", "meanwhile",
+            "subsequently", "in contrast", "on the contrary",
         ]
 
     def fit(self, texts: List[str]):
@@ -114,13 +137,59 @@ class StylometricFeaturesExtractor:
 
         word_density = len(words) / num_chars
 
-        # 7. New features
         transition_count = sum(lower_text.count(t) for t in self.TRANSITIONS)
         transition_density = transition_count / num_sentences
 
         lexical_density = sum(1 for w in words if len(w) > 6) / num_words
 
         sent_len_cv = (sentence_length_std / avg_sentence_length) if avg_sentence_length > 0 else 0.0
+
+        # Hapax & Dis Legomena (vocabulary richness)
+        word_freq = Counter(w.lower() for w in words)
+        hapax_ratio = sum(1 for v in word_freq.values() if v == 1) / num_words
+        dis_legomena_ratio = sum(1 for v in word_freq.values() if v == 2) / num_words
+
+        # Yule's K (vocabulary richness, size-independent)
+        freq_spectrum = Counter(word_freq.values())
+        N = num_words
+        M = sum(i * i * freq_spectrum[i] for i in freq_spectrum)
+        yules_k = 10000 * (M - N) / (N * N) if N > 1 else 0.0
+
+        # Sentence starter entropy (LLMs are more repetitive)
+        starters = [s.strip().split()[0].lower() for s in sentences if s.strip() and s.strip().split()]
+        if len(starters) > 1:
+            starter_freq = Counter(starters)
+            starter_probs = np.array(list(starter_freq.values()), dtype=np.float64) / len(starters)
+            sentence_starter_entropy = float(-np.sum(starter_probs * np.log2(starter_probs + 1e-12)))
+        else:
+            sentence_starter_entropy = 0.0
+
+        # Unique bigram ratio (repetition measure)
+        lower_words = [w.lower() for w in words]
+        if len(lower_words) > 1:
+            bigrams = [(lower_words[i], lower_words[i + 1]) for i in range(len(lower_words) - 1)]
+            unique_bigram_ratio = len(set(bigrams)) / len(bigrams)
+        else:
+            unique_bigram_ratio = 1.0
+
+        # Flesch Reading Ease
+        syllable_count = sum(max(1, len(re.findall(r'[aeiouy]+', w.lower()))) for w in words)
+        flesch_reading_ease = (
+            206.835 - 1.015 * (num_words / num_sentences) - 84.6 * (syllable_count / num_words)
+        )
+
+        # Word length entropy
+        word_lengths = [len(w) for w in words]
+        wl_counts = np.histogram(word_lengths, bins=range(1, 21))[0]
+        wl_probs = wl_counts / max(wl_counts.sum(), 1)
+        word_length_entropy = float(-np.sum(wl_probs * np.log2(wl_probs + 1e-12)))
+
+        # Punctuation distribution entropy
+        punct_chars = '.,;:!?-()[]"\''
+        punct_counts = np.array([text.count(p) for p in punct_chars], dtype=np.float64)
+        punct_total = max(punct_counts.sum(), 1)
+        punct_probs = punct_counts / punct_total
+        punct_entropy = float(-np.sum(punct_probs * np.log2(punct_probs + 1e-12)))
 
         return [
             avg_word_length,
@@ -141,4 +210,12 @@ class StylometricFeaturesExtractor:
             transition_density,
             lexical_density,
             sent_len_cv,
+            hapax_ratio,
+            dis_legomena_ratio,
+            yules_k,
+            sentence_starter_entropy,
+            unique_bigram_ratio,
+            flesch_reading_ease,
+            word_length_entropy,
+            punct_entropy,
         ]

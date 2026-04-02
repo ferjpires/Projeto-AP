@@ -13,7 +13,7 @@ CLASSES = ["Human", "OpenAI", "Meta", "Google", "Anthropic"]
 DEFAULT_OUTPUT = os.path.join(DATA_PROCESSED, "dataset_combined.csv")
 
 
-def word_count_filter(df, min_words=90, max_words=130):
+def word_count_filter(df, min_words=81, max_words=120):
     wc = df["Text"].apply(lambda x: len(str(x).split()))
     before = len(df)
     df = df[(wc >= min_words) & (wc <= max_words)].copy()

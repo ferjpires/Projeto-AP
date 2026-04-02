@@ -1,0 +1,1 @@
+{"vocab_size": 1000, "embedding_dim": 100, "n_filters": 64, "filter_sizes": [2, 3, 4], "dropout": 0.3, "lr": 0.001, "batch_size": 32, "max_len": 200, "epochs": 30, "patience": 8}

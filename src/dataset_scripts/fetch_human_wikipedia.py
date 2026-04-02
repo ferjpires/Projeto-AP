@@ -20,7 +20,7 @@ WIKI_CATEGORIES = [
     "Chemistry", "Organic_chemistry",
     "Physics", "Quantum_mechanics",
     "Mathematics", "Statistics",
-    "Computer_science", "Engineering",
+    "Computer_science", "Engineering", "Science"
 ]
 
 
@@ -101,7 +101,7 @@ def fetch_from_categories(target_new, seen_texts):
         members = get_category_members(cat)
         for title in members:
             all_articles.append((cat, title))
-        time.sleep(0.5)
+        time.sleep(random.uniform(2.0, 3.0))
 
     print(f"  Total candidate articles: {len(all_articles)}")
     random.shuffle(all_articles)
@@ -149,7 +149,6 @@ def main():
 
     print(f"Target: {args.target} total human samples")
 
-    # Load existing data
     existing_texts, existing_df = load_existing_texts(OUTPUT_PATH)
     current_count = len(existing_df)
     print(f"Existing: {current_count} samples")
@@ -166,7 +165,6 @@ def main():
         print("ERROR: No new paragraphs fetched.")
         sys.exit(1)
 
-    # Append to existing
     new_df = pd.DataFrame({"Text": new_paragraphs, "Label": "Human"})
     combined = pd.concat([existing_df, new_df], ignore_index=True)
 
