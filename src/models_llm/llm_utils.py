@@ -2,7 +2,6 @@ import time
 import random
 from typing import Callable, Optional
 
-import numpy as np
 import pandas as pd
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 
@@ -59,7 +58,6 @@ def run_experiment(
 
             raw = ask_fn(prompt)
             pred = normalize_fn(raw)
-            print(pred)
 
             raw_outputs.append(raw)
             predictions.append(pred)
@@ -95,8 +93,11 @@ def evaluate(
     results_df = pd.DataFrame(rows)
 
     valid = results_df.dropna(subset=["prediction"])
-    acc = accuracy_score(valid["true_label"], valid["prediction"])
     null_rate = results_df["prediction"].isna().mean()
+    acc = (
+        accuracy_score(valid["true_label"], valid["prediction"])
+        if not valid.empty else 0.0
+    )
 
     print(f"\n{'='*50}")
     if experiment_name:
@@ -104,10 +105,13 @@ def evaluate(
     print(f"  Accuracy : {acc:.4f}  ({len(valid)}/{len(results_df)} parseable)")
     print(f"  Null rate: {null_rate:.2%}")
     print(f"{'='*50}")
-    print(classification_report(
-        valid["true_label"], valid["prediction"],
-        labels=VALID_LABELS, zero_division=0
-    ))
+    if valid.empty:
+        print("No parseable predictions.")
+    else:
+        print(classification_report(
+            valid["true_label"], valid["prediction"],
+            labels=VALID_LABELS, zero_division=0
+        ))
 
     return results_df
 
@@ -129,6 +133,10 @@ def compare_experiments(experiment_dict: dict[str, list], df: pd.DataFrame, labe
 def confusion_df(predictions: list, df: pd.DataFrame, label_col: str = "Label") -> pd.DataFrame:
     y_true = df[label_col].tolist()
     valid = [(p, t) for p, t in zip(predictions, y_true) if p is not None]
+    if not valid:
+        cm = [[0] * len(VALID_LABELS) for _ in VALID_LABELS]
+        return pd.DataFrame(cm, index=VALID_LABELS, columns=VALID_LABELS)
+
     pv, tv = zip(*valid)
     cm = confusion_matrix(tv, pv, labels=VALID_LABELS)
     return pd.DataFrame(cm, index=VALID_LABELS, columns=VALID_LABELS)

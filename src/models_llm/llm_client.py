@@ -7,8 +7,8 @@ from mistralai.client import Mistral
 
 GROQ_MODEL    = "groq/compound"
 MISTRAL_MODEL = "devstral-latest"
+VALID_LABELS = ("Anthropic", "Google", "Human", "Meta", "OpenAI")
 
-VALID_LABELS = {"Anthropic", "Google", "Human", "Meta", "OpenAI"}
 
 def get_groq_client() -> Groq:
     key = os.getenv("GROQ_API_KEY")
@@ -60,6 +60,7 @@ _SYSTEM_INTRO = (
     "Texts are short (~100-120 words)\n\n"
 )
 
+
 _FORMAT_INSTRUCTION = (
     "Reply with EXACTLY ONE word from the only possible sources.\n"
     "No explanation. No punctuation. Just the label."
@@ -90,6 +91,7 @@ def build_few_shot_prompt(text: str, support_examples: list[dict]) -> str:
         f"Text: {text.strip()}\n"
         f"Label:"
     )
+
 
 def normalize_prediction(raw: Optional[str]) -> Optional[str]:
     if raw is None:

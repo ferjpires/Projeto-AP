@@ -130,7 +130,6 @@ class StylometricFeaturesExtractor:
         discourse_count = sum(lower_text.count(d) for d in self.DISCOURSE)
         discourse_marker_rate = discourse_count / num_sentences
 
-        # 6. Other symbols
         colon_rate = text.count(':') / num_words
         dash_rate = text.count('-') / num_words
         quotes_rate = (text.count('"') + text.count("'")) / num_words
@@ -155,7 +154,7 @@ class StylometricFeaturesExtractor:
         M = sum(i * i * freq_spectrum[i] for i in freq_spectrum)
         yules_k = 10000 * (M - N) / (N * N) if N > 1 else 0.0
 
-        # Sentence starter entropy (LLMs are more repetitive)
+        # Sentence starter entropy
         starters = [s.strip().split()[0].lower() for s in sentences if s.strip() and s.strip().split()]
         if len(starters) > 1:
             starter_freq = Counter(starters)
@@ -164,7 +163,7 @@ class StylometricFeaturesExtractor:
         else:
             sentence_starter_entropy = 0.0
 
-        # Unique bigram ratio (repetition measure)
+        # Unique bigram ratio
         lower_words = [w.lower() for w in words]
         if len(lower_words) > 1:
             bigrams = [(lower_words[i], lower_words[i + 1]) for i in range(len(lower_words) - 1)]
