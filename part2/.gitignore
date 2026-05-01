@@ -1,0 +1,14 @@
+data/raw/
+data/processed/
+data/metadata.csv
+models/*.pth
+outputs/
+experiments/*/checkpoints/
+__pycache__/
+.venv/
+.ipynb_checkpoints/
+*.pyc
+*.egg-info/
+.DS_Store
+wandb/
+mlruns/

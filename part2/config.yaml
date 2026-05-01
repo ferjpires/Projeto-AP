@@ -1,0 +1,53 @@
+seed: 42
+
+data:
+  root_dir: "data/processed"
+  train_dir: "data/processed/train"
+  val_dir: "data/processed/val"
+  test_dir: "data/processed/test"
+  class_names:
+    - Biliary_Leaks
+    - Lithiasis
+    - Normal
+    - Stricture
+
+training:
+  image_size: 224
+  batch_size: 32
+  num_epochs: 30
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  num_workers: 4
+  device: "cuda"          # set to "cpu" if no GPU available
+  early_stopping_patience: 7
+  scheduler: "cosine"     # options: cosine, plateau
+
+model:
+  name: "efficientnet_b0"   # options: resnet18, efficientnet_b0, densenet121, mobilenet_v3, deit_tiny
+  pretrained: true
+  num_classes: 4
+
+loss:
+  name: "weighted_cross_entropy"   # options: weighted_cross_entropy, focal
+  focal_gamma: 2.0
+  focal_alpha: null                # null = use class weights automatically
+
+augmentation:
+  use_clahe: false
+  random_rotation: 10
+  horizontal_flip: true
+  vertical_flip: false
+  color_jitter: true
+  random_erasing: false
+
+sampling:
+  use_weighted_sampler: false   # alternative to class weights in loss
+
+outputs:
+  models_dir: "models"
+  figures_dir: "outputs/figures"
+  confusion_matrices_dir: "outputs/confusion_matrices"
+  roc_dir: "outputs/roc_curves"
+  gradcam_dir: "outputs/gradcam"
+  tables_dir: "outputs/tables"
+  experiments_dir: "experiments"
