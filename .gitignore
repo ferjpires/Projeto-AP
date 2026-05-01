@@ -208,6 +208,5 @@ __marimo__/
 
 saved_models/distil*
 *.h5
-scripts
 data/embeddings/
 .direnv
