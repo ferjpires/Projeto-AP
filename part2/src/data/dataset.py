@@ -88,6 +88,7 @@ def build_dataloaders(config: dict) -> Tuple[DataLoader, DataLoader, DataLoader,
     n_workers = config["training"].get("num_workers", 4)
     class_names = config["data"]["class_names"]
     use_sampler = config.get("sampling", {}).get("use_weighted_sampler", False)
+    pin = torch.cuda.is_available()
 
     train_ds = ERCPDataset(
         config["data"]["train_dir"],
@@ -110,14 +111,14 @@ def build_dataloaders(config: dict) -> Tuple[DataLoader, DataLoader, DataLoader,
         sampler = WeightedRandomSampler(sample_weights, num_samples=len(sample_weights),
                                         replacement=True)
         train_loader = DataLoader(train_ds, batch_size=batch, sampler=sampler,
-                                  num_workers=n_workers, pin_memory=True)
+                                  num_workers=n_workers, pin_memory=pin)
     else:
         train_loader = DataLoader(train_ds, batch_size=batch, shuffle=True,
-                                  num_workers=n_workers, pin_memory=True)
+                                  num_workers=n_workers, pin_memory=pin)
 
     val_loader = DataLoader(val_ds, batch_size=batch, shuffle=False,
-                            num_workers=n_workers, pin_memory=True)
+                            num_workers=n_workers, pin_memory=pin)
     test_loader = DataLoader(test_ds, batch_size=batch, shuffle=False,
-                             num_workers=n_workers, pin_memory=True)
+                             num_workers=n_workers, pin_memory=pin)
 
     return train_loader, val_loader, test_loader, train_ds, val_ds, test_ds
