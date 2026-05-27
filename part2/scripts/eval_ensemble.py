@@ -54,7 +54,7 @@ from src.data.transforms import get_transforms
 from src.models.build_model import build_model
 from src.training.metrics import (compute_metrics, print_metrics,
                                   save_metrics_csv, save_classification_report)
-from src.utils.plots import plot_confusion_matrix
+from src.utils.plots import plot_confusion_matrix, plot_roc_curves
 
 
 def parse_args():
@@ -217,6 +217,11 @@ def main():
     cm_path.parent.mkdir(parents=True, exist_ok=True)
     plot_confusion_matrix(metrics["confusion_matrix"], class_names,
                           cm_path, title=f"Confusion Matrix — {tag}")
+
+    roc_path = root / cfg["outputs"]["roc_dir"] / f"{tag}_roc.png"
+    roc_path.parent.mkdir(parents=True, exist_ok=True)
+    if not np.isnan(y_prob).any():
+        plot_roc_curves(y_true, y_prob, class_names, roc_path)
 
     print(f"\nEnsemble test F1 macro: {metrics['f1_macro']:.4f}")
 
