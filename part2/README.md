@@ -8,15 +8,20 @@ Automatic classification of ERCP (Endoscopic Retrograde Cholangiopancreatography
 
 ## Classes
 
-| Class | Description |
-|---|---|
-| `Biliary_Leaks` | Bile leaks / Fugas de bílis |
-| `Lithiasis` | Biliary stones / Cálculos |
-| `Stricture` | Biliary strictures / Estenoses |
-| `Normal` | Normal findings |
+| Class           | Description                    |
+| --------------- | ------------------------------ |
+| `Biliary_Leaks` | Bile leaks / Fugas de bílis    |
+| `Lithiasis`     | Biliary stones / Cálculos      |
+| `Stricture`     | Biliary strictures / Estenoses |
+| `Normal`        | Normal findings                |
 
 ## Baseline to beat
+
 **F1 macro = 0.738** (from the MIQR-CC paper)
+
+## Our best result
+
+**F1 macro = 0.7483** (E6 — stacking ensemble over E2 + E4 across 5 seeds)
 
 ---
 
@@ -37,19 +42,36 @@ pip install -r requirements.txt
 # 3. EDA
 python scripts/run_eda.py
 
-# 4. Train baseline (ResNet18)
-python scripts/train_baseline.py
+# 4. Train a single experiment (e.g. our champion CNN, ConvNeXt-tiny + Focal, seed 42)
+python scripts/train_experiment.py --model convnext_tiny --loss focal --tag E4 --seed 42
 
-# 5. Train best model (EfficientNet-B0)
-python scripts/train_experiment.py --model efficientnet_b0
+# 5. Evaluate any checkpoint
+python scripts/evaluate_model.py \
+    --checkpoint models/convnext_tiny_focal_E4_seed42.pth \
+    --model convnext_tiny
 
-# 6. Evaluate
-python scripts/evaluate_model.py --checkpoint models/efficientnet_b0_weighted_cross_entropy_E2.pth
+# 6. Mixed-architecture ensemble (E6 — final reported result, stacking by default)
+python scripts/eval_ensemble.py \
+    --checkpoints \
+        densenet121:models/densenet121_focal_E2_seed42.pth \
+        densenet121:models/densenet121_focal_E2_seed123.pth \
+        densenet121:models/densenet121_focal_E2_seed777.pth \
+        densenet121:models/densenet121_focal_E2_seed7.pth \
+        densenet121:models/densenet121_focal_E2_seed2024.pth \
+        convnext_tiny:models/convnext_tiny_focal_E4_seed42.pth \
+        convnext_tiny:models/convnext_tiny_focal_E4_seed123.pth \
+        convnext_tiny:models/convnext_tiny_focal_E4_seed777.pth \
+        convnext_tiny:models/convnext_tiny_focal_E4_seed7.pth \
+        convnext_tiny:models/convnext_tiny_focal_E4_seed2024.pth \
+    --tag E6_ensemble_mixed
+
+# 6b. Plain averaging variant (ablation): add --combine avg
+python scripts/eval_ensemble.py --combine avg --checkpoints ... --tag E6_avg
 
 # 7. Grad-CAM
-python scripts/generate_gradcam.py --checkpoint models/best_model.pth
+python scripts/generate_gradcam.py --checkpoint models/convnext_tiny_focal_E4_seed42.pth
 
-# 8. Run all experiments
+# 8. Run the full experiment suite (E0 → E6 end-to-end, ~10–12 h on a single GPU)
 python scripts/run_all_experiments.py
 ```
 
@@ -75,7 +97,7 @@ MIQR-CC-AP-Project/
 │   │   ├── transforms.py        # CLAHE + augmentation pipelines
 │   │   └── eda.py               # EDA utilities
 │   ├── models/
-│   │   ├── build_model.py       # Model factory (ResNet/EfficientNet/DenseNet/DeiT)
+│   │   ├── build_model.py       # Model factory (ResNet/EfficientNet/DenseNet/ConvNeXt/DeiT)
 │   │   └── losses.py            # CrossEntropy weighted + Focal Loss
 │   ├── training/
 │   │   ├── train.py             # Training loop + early stopping
@@ -90,10 +112,11 @@ MIQR-CC-AP-Project/
 ├── scripts/
 │   ├── run_eda.py
 │   ├── train_baseline.py        # ResNet18 baseline
-│   ├── train_experiment.py      # Any model + hyperparams
+│   ├── train_experiment.py      # Any model + hyperparams (supports --seed)
 │   ├── evaluate_model.py        # Evaluate any checkpoint
+│   ├── eval_ensemble.py         # Multi-ckpt + mixed-arch ensemble + TTA
 │   ├── generate_gradcam.py      # Grad-CAM for any checkpoint
-│   └── run_all_experiments.py   # Run all 6 planned experiments
+│   └── run_all_experiments.py   # Run E0–E6 end-to-end
 ├── experiments/                 # Auto-created per experiment
 ├── outputs/
 │   ├── figures/                 # EDA + learning curves
@@ -106,28 +129,44 @@ MIQR-CC-AP-Project/
 
 ---
 
-## Planned Experiments
+## Experiments
 
-| ID | Model | CLAHE | Loss | Sampler |
-|---|---|---|---|---|
-| E0 | ResNet18 | No | CE weighted | No |
-| E1 | ResNet18 | Yes | CE weighted | No |
-| E2 | EfficientNet-B0 | No | CE weighted | No |
-| E3 | EfficientNet-B0 | Yes | CE weighted | No |
-| E4 | DenseNet121 | No | Focal | No |
-| E5 | EfficientNet-B0 | No | CE weighted | Yes |
+All experiments use the same training pipeline (320 px input, 2-stage fine-tuning
+with head-only warmup, RandAugment + RandomErasing, cosine LR with linear warmup,
+mixed precision on GPU).
+
+| ID             | Model                                                                          | CLAHE | Loss        | Sampler | Seeds | Test F1 macro    |
+| -------------- | ------------------------------------------------------------------------------ | ----- | ----------- | ------- | ----- | ---------------- |
+| E0             | ResNet18                                                                       | Yes   | CE weighted | No      | 1     | 0.5442           |
+| E1             | EfficientNet-B0                                                                | Yes   | CE weighted | No      | 1     | 0.5470           |
+| E2             | DenseNet121                                                                    | No    | Focal       | No      | 5     | 0.5421 (seed 42) |
+| E3             | EfficientNet-B0                                                                | No    | CE weighted | Yes     | 1     | 0.6130           |
+| E4             | ConvNeXt-tiny                                                                  | No    | Focal       | No      | 5     | 0.6730 (seed 42) |
+| E5             | DeiT-tiny (ViT)                                                                | No    | Focal       | No      | 1     | 0.5447           |
+| **E6**         | **Ensemble of E2 + E4 across 5 seeds (10 ckpts), Logistic Regression stacker** |       |             |         |       | **0.7483**       |
+| E6′ (ablation) | Same checkpoints, plain logit averaging                                        |       |             |         |       | 0.7306           |
+
+E2 and E4 are the ensemble feeders — they are trained with 5 seeds
+(`42, 123, 777, 7, 2024`). The default E6 strategy fits a Logistic Regression
+meta-learner (`C=0.01`, `class_weight=balanced`) on the validation set's
+per-checkpoint softmax probabilities and applies it to the test set. The
+single-seed column reports the seed-42 run for direct comparability with
+E0/E1/E3/E5.
+
+**Baseline (paper):** 0.738. **Best result here:** **0.7483 (E6, +0.010)**.
 
 ---
 
 ## Supported Models
 
-- `resnet18` — baseline
+- `resnet18`
 - `resnet50`
-- `efficientnet_b0` — recommended main model
+- `efficientnet_b0`
 - `efficientnet_b3`
-- `densenet121` — good for medical imaging
+- `densenet121` — ensemble feeder (E2)
 - `mobilenet_v3`
-- `deit_tiny` — Vision Transformer (extra)
+- `deit_tiny` — Vision Transformer (E5)
+- `convnext_tiny` — ensemble feeder, best single-model (E4)
 
 ## Dataset
 

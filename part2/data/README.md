@@ -6,6 +6,9 @@
 
 ```
 data/
+├── raw/                         (processed PNG images, flat directory)
+├── metadata.csv
+├── official_split/              (official reference split; not committed)
 ├── processed/
 │   ├── train/
 │   │   ├── Biliary_Leaks/   (110 images)

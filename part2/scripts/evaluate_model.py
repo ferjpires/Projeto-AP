@@ -47,7 +47,7 @@ def main():
     base_name = model_name.split("_weighted")[0].split("_focal")[0].split("_clahe")[0]
     # Try to match to a known model
     known = ["resnet18", "resnet50", "efficientnet_b0", "efficientnet_b3",
-             "densenet121", "mobilenet_v3", "deit_tiny"]
+             "densenet121", "mobilenet_v3", "deit_tiny", "convnext_tiny"]
     model_key = next((m for m in known if m in base_name.lower()), cfg["model"]["name"])
 
     print(f"\n  Model: {model_name} (architecture: {model_key})")

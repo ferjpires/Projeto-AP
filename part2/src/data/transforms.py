@@ -68,8 +68,10 @@ def get_transforms(image_size: int = 224, split: str = "train",
     normalize = T.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
 
     if split == "train":
+        strong = augmentation_cfg.get("strong_aug", False)
+        crop_scale = (0.7, 1.0) if strong else (0.8, 1.0)
         aug = [
-            T.RandomResizedCrop(image_size, scale=(0.8, 1.0),
+            T.RandomResizedCrop(image_size, scale=crop_scale,
                                 interpolation=InterpolationMode.BILINEAR),
         ]
         if augmentation_cfg.get("horizontal_flip", True):
@@ -79,15 +81,23 @@ def get_transforms(image_size: int = 224, split: str = "train",
         rot = augmentation_cfg.get("random_rotation", 10)
         if rot > 0:
             aug.append(T.RandomRotation(degrees=rot))
-        if augmentation_cfg.get("color_jitter", True):
+        if strong:
+            n_ops = augmentation_cfg.get("randaugment_n", 2)
+            magnitude = augmentation_cfg.get("randaugment_m", 9)
+            aug.append(T.RandAugment(num_ops=n_ops, magnitude=magnitude))
+            if augmentation_cfg.get("color_jitter", True):
+                aug.append(T.ColorJitter(brightness=0.2, contrast=0.2))
+        elif augmentation_cfg.get("color_jitter", True):
             aug.append(T.ColorJitter(brightness=0.2, contrast=0.2,
                                       saturation=0.1, hue=0.05))
         aug += [
             T.ToTensor(),
             normalize,
         ]
-        if augmentation_cfg.get("random_erasing", False):
-            aug.append(T.RandomErasing(p=0.2, scale=(0.02, 0.1)))
+        erase_p = 0.25 if strong else (0.2 if augmentation_cfg.get("random_erasing", False) else 0.0)
+        if erase_p > 0:
+            erase_scale = (0.02, 0.15) if strong else (0.02, 0.1)
+            aug.append(T.RandomErasing(p=erase_p, scale=erase_scale))
         return T.Compose(base_pre + aug)
 
     else:

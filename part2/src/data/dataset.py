@@ -111,10 +111,12 @@ def build_dataloaders(config: dict) -> Tuple[DataLoader, DataLoader, DataLoader,
         sampler = WeightedRandomSampler(sample_weights, num_samples=len(sample_weights),
                                         replacement=True)
         train_loader = DataLoader(train_ds, batch_size=batch, sampler=sampler,
-                                  num_workers=n_workers, pin_memory=pin)
+                                  num_workers=n_workers, pin_memory=pin,
+                                  drop_last=True)
     else:
         train_loader = DataLoader(train_ds, batch_size=batch, shuffle=True,
-                                  num_workers=n_workers, pin_memory=pin)
+                                  num_workers=n_workers, pin_memory=pin,
+                                  drop_last=True)
 
     val_loader = DataLoader(val_ds, batch_size=batch, shuffle=False,
                             num_workers=n_workers, pin_memory=pin)

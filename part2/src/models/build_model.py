@@ -20,6 +20,7 @@ MODEL_REGISTRY = [
     "densenet121",
     "mobilenet_v3",
     "deit_tiny",
+    "convnext_tiny",
 ]
 
 
@@ -75,7 +76,15 @@ def build_model(model_name: str, num_classes: int = NUM_CLASSES,
     # --------------------------------------------------------- DeiT-tiny (timm)
     if model_name == "deit_tiny":
         model = timm.create_model(
-            "deit_tiny_patch16_224", pretrained=pretrained, num_classes=num_classes
+            "deit_tiny_patch16_224", pretrained=pretrained,
+            num_classes=num_classes, img_size=320,
+        )
+        return model
+
+    # ------------------------------------------------------ ConvNeXt-tiny (timm)
+    if model_name == "convnext_tiny":
+        model = timm.create_model(
+            "convnext_tiny", pretrained=pretrained, num_classes=num_classes
         )
         return model
 
@@ -106,7 +115,8 @@ def freeze_backbone(model: nn.Module, model_name: str) -> nn.Module:
             if "classifier" not in name:
                 param.requires_grad = False
 
-    elif "efficientnet" in model_name or "deit" in model_name:
+    elif "efficientnet" in model_name or "deit" in model_name \
+            or "convnext" in model_name:
         # timm models expose head/classifier
         for name, param in model.named_parameters():
             if "head" not in name and "classifier" not in name:

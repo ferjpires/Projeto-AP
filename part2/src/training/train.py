@@ -25,7 +25,7 @@ def train_one_epoch(model: nn.Module, loader: DataLoader,
         optimizer.zero_grad()
 
         if scaler is not None:
-            with torch.cuda.amp.autocast():
+            with torch.amp.autocast("cuda", dtype=torch.float16):
                 outputs = model(imgs)
                 loss = criterion(outputs, labels)
             scaler.scale(loss).backward()
@@ -73,8 +73,9 @@ def validate_one_epoch(model: nn.Module, loader: DataLoader,
     return {"loss": avg_loss, "f1_macro": f1}
 
 
-def build_optimizer(model: nn.Module, config: dict) -> torch.optim.Optimizer:
-    lr = config["training"]["learning_rate"]
+def build_optimizer(model: nn.Module, config: dict,
+                    lr_override: float = None) -> torch.optim.Optimizer:
+    lr = lr_override if lr_override is not None else config["training"]["learning_rate"]
     wd = config["training"].get("weight_decay", 1e-4)
     return torch.optim.AdamW(
         filter(lambda p: p.requires_grad, model.parameters()),
@@ -83,12 +84,24 @@ def build_optimizer(model: nn.Module, config: dict) -> torch.optim.Optimizer:
 
 
 def build_scheduler(optimizer, config: dict, n_epochs: int):
+    """
+    Cosine schedule with optional linear warmup (config.training.warmup_epochs).
+    """
     sched_name = config["training"].get("scheduler", "cosine")
+    warmup = config["training"].get("warmup_epochs", 0)
     if sched_name == "cosine":
+        if warmup > 0:
+            def _lr(epoch):
+                if epoch < warmup:
+                    return float(epoch + 1) / float(warmup + 1)
+                progress = (epoch - warmup) / max(1, n_epochs - warmup)
+                import math
+                return 0.5 * (1.0 + math.cos(math.pi * progress))
+            return torch.optim.lr_scheduler.LambdaLR(optimizer, _lr)
         return torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=n_epochs)
     elif sched_name == "plateau":
         return torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode="max", factor=0.5, patience=3, verbose=True
+            optimizer, mode="max", factor=0.5, patience=3
         )
     return None
 
@@ -110,13 +123,24 @@ def train_model(model: nn.Module, train_loader: DataLoader, val_loader: DataLoad
 
     n_epochs = config["training"]["num_epochs"]
     patience = config["training"].get("early_stopping_patience", 7)
+    head_warmup = config["training"].get("head_warmup_epochs", 0)
+    head_lr = config["training"].get("head_lr", 1e-3)
 
-    optimizer = build_optimizer(model, config)
-    scheduler = build_scheduler(optimizer, config, n_epochs)
+    # optional head-only warmup with frozen backbone
+    if head_warmup > 0:
+        from src.models.build_model import freeze_backbone
+        freeze_backbone(model, model_name)
+        n_trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        print(f"  [Stage 1] Head-only warmup: {head_warmup} eps, LR={head_lr}, "
+              f"trainable params={n_trainable:,}")
 
-    # Mixed precision on CUDA
+    initial_lr = head_lr if head_warmup > 0 else config["training"]["learning_rate"]
+    optimizer = build_optimizer(model, config, lr_override=initial_lr)
+    # Scheduler covers the post-warmup phase only
+    scheduler = build_scheduler(optimizer, config, max(1, n_epochs - head_warmup))
+
     use_amp = device.type == "cuda"
-    scaler = torch.cuda.amp.GradScaler() if use_amp else None
+    scaler = torch.amp.GradScaler("cuda") if use_amp else None
 
     experiment_dir = Path(experiment_dir)
     experiment_dir.mkdir(parents=True, exist_ok=True)
@@ -137,13 +161,21 @@ def train_model(model: nn.Module, train_loader: DataLoader, val_loader: DataLoad
     print(f"{'='*55}")
 
     for epoch in range(1, n_epochs + 1):
+        if head_warmup > 0 and epoch == head_warmup + 1:
+            for p in model.parameters():
+                p.requires_grad = True
+            n_trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+            print(f"  [Stage 2] Unfreezing all layers. Trainable params={n_trainable:,}, "
+                  f"LR={config['training']['learning_rate']}")
+            optimizer = build_optimizer(model, config)
+            scheduler = build_scheduler(optimizer, config, n_epochs - head_warmup)
+
         t0 = time.time()
         train_stats = train_one_epoch(model, train_loader, criterion,
                                       optimizer, device, scaler)
         val_stats = validate_one_epoch(model, val_loader, criterion, device)
 
-        # Scheduler step
-        if scheduler is not None:
+        if scheduler is not None and epoch > head_warmup:
             if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                 scheduler.step(val_stats["f1_macro"])
             else:

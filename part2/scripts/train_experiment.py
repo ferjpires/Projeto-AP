@@ -12,6 +12,12 @@ import copy
 import shutil
 from pathlib import Path
 
+import multiprocessing as mp
+try:
+    mp.set_start_method("fork", force=True)
+except RuntimeError:
+    pass
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.utils.paths import load_config, ensure_dirs, get_project_root
@@ -40,6 +46,10 @@ def parse_args():
     p.add_argument("--lr", type=float, default=None)
     p.add_argument("--tag", default=None,
                    help="Extra tag to append to experiment name")
+    p.add_argument("--seed", type=int, default=None,
+                   help="Override training seed (config default if omitted). "
+                        "When set, '_seed<N>' is appended to the experiment name "
+                        "so multi-seed runs do not overwrite each other.")
     return p.parse_args()
 
 
@@ -62,13 +72,16 @@ def main():
         cfg["training"]["num_epochs"] = args.epochs
     if args.lr:
         cfg["training"]["learning_rate"] = args.lr
+    if args.seed is not None:
+        cfg["seed"] = args.seed
 
     model_name = cfg["model"]["name"]
     clahe_tag = "_clahe" if cfg["augmentation"].get("use_clahe") else ""
     loss_tag = f"_{cfg['loss']['name']}"
     sampler_tag = "_sampler" if cfg.get("sampling", {}).get("use_weighted_sampler") else ""
     extra_tag = f"_{args.tag}" if args.tag else ""
-    exp_name = f"{model_name}{clahe_tag}{loss_tag}{sampler_tag}{extra_tag}"
+    seed_tag = f"_seed{args.seed}" if args.seed is not None else ""
+    exp_name = f"{model_name}{clahe_tag}{loss_tag}{sampler_tag}{extra_tag}{seed_tag}"
 
     print("=" * 55)
     print(f"  Experiment: {exp_name}")

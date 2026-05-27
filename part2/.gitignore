@@ -1,5 +1,6 @@
 data/raw/
 data/processed/
+data/official_split/
 data/metadata.csv
 models/*.pth
 outputs/
@@ -12,3 +13,4 @@ __pycache__/
 .DS_Store
 wandb/
 mlruns/
+.claude
