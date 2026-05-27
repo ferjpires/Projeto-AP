@@ -1,0 +1,10 @@
+               precision    recall  f1-score   support
+
+Biliary_Leaks       0.50      0.82      0.62        17
+    Lithiasis       0.86      0.79      0.82       123
+       Normal       0.63      0.74      0.68        43
+    Stricture       0.92      0.82      0.87        84
+
+     accuracy                           0.79       267
+    macro avg       0.73      0.79      0.75       267
+ weighted avg       0.82      0.79      0.80       267

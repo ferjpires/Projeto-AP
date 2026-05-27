@@ -1,0 +1,2 @@
+accuracy,f1_macro,f1_weighted,precision_macro,recall_macro,f1_Biliary_Leaks,f1_Lithiasis,f1_Normal,f1_Stricture,auc_macro,model
+0.6179775280898876,0.5470362013638187,0.6107516852430249,0.5992804492804493,0.5209865568462212,0.4444444444444444,0.6787003610108303,0.425,0.64,0.8116765493572402,efficientnet_b0_clahe_weighted_cross_entropy_E1

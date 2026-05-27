@@ -1,0 +1,2 @@
+accuracy,f1_macro,f1_weighted,precision_macro,recall_macro,f1_Biliary_Leaks,f1_Lithiasis,f1_Normal,f1_Stricture,auc_macro,model,n_checkpoints,tta,combine,archs
+0.7827715355805244,0.7306120993540762,0.7838807380498688,0.7630113908090952,0.7321670869141758,0.5714285714285714,0.8130081300813008,0.7222222222222222,0.8157894736842105,0.935401628282271,E6_ensemble_mixed_avg,10,none,avg,"convnext_tiny,densenet121"

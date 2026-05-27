@@ -3,7 +3,6 @@ data/processed/
 data/official_split/
 data/metadata.csv
 models/**/*.pth
-outputs/
 experiments/*/checkpoints/
 __pycache__/
 .venv/
