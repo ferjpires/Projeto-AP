@@ -2,7 +2,7 @@ data/raw/
 data/processed/
 data/official_split/
 data/metadata.csv
-models/*.pth
+models/**/*.pth
 outputs/
 experiments/*/checkpoints/
 __pycache__/
