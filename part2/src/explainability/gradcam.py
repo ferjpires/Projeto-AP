@@ -46,6 +46,10 @@ def get_target_layer(model: nn.Module, model_name: str) -> nn.Module:
         # For ViT/DeiT use the last attention block norm
         return model.blocks[-1].norm1
 
+    elif "convnext" in model_name:
+        # timm ConvNeXt: last block of the last stage
+        return model.stages[-1].blocks[-1]
+
     raise ValueError(f"Cannot determine target layer for model: {model_name}")
 
 

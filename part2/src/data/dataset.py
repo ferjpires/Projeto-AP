@@ -89,6 +89,10 @@ def build_dataloaders(config: dict) -> Tuple[DataLoader, DataLoader, DataLoader,
     class_names = config["data"]["class_names"]
     use_sampler = config.get("sampling", {}).get("use_weighted_sampler", False)
     pin = torch.cuda.is_available()
+    seed = config.get("seed", 42)
+
+    loader_gen = torch.Generator()
+    loader_gen.manual_seed(seed)
 
     train_ds = ERCPDataset(
         config["data"]["train_dir"],
@@ -109,14 +113,14 @@ def build_dataloaders(config: dict) -> Tuple[DataLoader, DataLoader, DataLoader,
     if use_sampler:
         sample_weights = train_ds.get_sample_weights()
         sampler = WeightedRandomSampler(sample_weights, num_samples=len(sample_weights),
-                                        replacement=True)
+                                        replacement=True, generator=loader_gen)
         train_loader = DataLoader(train_ds, batch_size=batch, sampler=sampler,
                                   num_workers=n_workers, pin_memory=pin,
-                                  drop_last=True)
+                                  drop_last=True, generator=loader_gen)
     else:
         train_loader = DataLoader(train_ds, batch_size=batch, shuffle=True,
                                   num_workers=n_workers, pin_memory=pin,
-                                  drop_last=True)
+                                  drop_last=True, generator=loader_gen)
 
     val_loader = DataLoader(val_ds, batch_size=batch, shuffle=False,
                             num_workers=n_workers, pin_memory=pin)

@@ -47,7 +47,7 @@ def main():
     ckpt = torch.load(args.checkpoint, map_location=device)
     model_name = args.model or ckpt.get("model_name", cfg["model"]["name"])
     known = ["resnet18", "resnet50", "efficientnet_b0", "efficientnet_b3",
-             "densenet121", "mobilenet_v3", "deit_tiny"]
+             "densenet121", "mobilenet_v3", "deit_tiny", "convnext_tiny"]
     model_key = next((m for m in known if m in model_name.lower()), cfg["model"]["name"])
 
     print(f"\n  Model: {model_name} (arch: {model_key})")
